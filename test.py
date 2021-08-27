@@ -24,7 +24,7 @@ def ComplementaryFilter(acc, gyr):
     roll -= gyr[1]*dt
 
     #Compensate for drift with accelerometer data if the drift is significant
-    force_mag = sum(abs(acc)) #Data is already normalized, so this is technically total acc
+    force_mag = sum([abs(i) for i in acc]) #Data is already normalized, so this is technically total acc
     #Most likely we will be using the 2G range as no higher is required
     #FIXME: values, will depend on sidereal speed
     if 0>force_mag>2*9.81: #Check that value is within two g
