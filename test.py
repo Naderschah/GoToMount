@@ -5,9 +5,9 @@ sys.path.insert(0,'/home/pi/mpu6050')
 from mpu6050 import mpu6050
 import time
 import math
+import threading
 
 sensor = mpu6050(0x68)
-
 #Coefficients to use for complementary filter
 coeff = [0.98,0.02]
 pitch = 0
@@ -35,42 +35,27 @@ def ComplementaryFilter(acc, gyr):
         roll_acc = math.atan2(acc[0]/acc[2])*180/math.pi
         roll = roll*coeff[0]+roll_acc*coeff[1]
 
-
-
 def return_list(dict):
     x = dict['x']
     y = dict['y']
     z = dict['z']
     return [x,y,z]
 
-
-def compute_rotation(gyro,correction):
-    """Compute rotation in timestep --- small angle approximation"""
-    x = gyro['x']-correction[0]
-    y = gyro['y']-correction[1]
-    z = gyro['z']-correction[2]
-    y_rot = -math.atan2(x, math.sqrt(y**2+z**2))
-    x_rot = math.atan2(y, math.sqrt(x**2+z**2))
-    orientation[0] += math.degrees(x_rot)
-    orientation[1] += math.degrees(y_rot)
-
-
-
-
-sensor.set_accel_range(sensor.ACCEL_RANGE_2G)
-
-
-while True:
+def startTimer():
+    threading.Timer(dt, startTimer)
     ComplementaryFilter(return_list(sensor.get_accel_data()), return_list(sensor.get_gyro_data()))
     print('pitch: {}, roll: {}'.format(pitch, roll))
+
+def main():
+    sensor.set_accel_range(sensor.ACCEL_RANGE_2G)
+    startTimer()
     
-    '''
-    print('Acceleration')
-    print(sensor.get_accel_data())
-    print('Temperature')
-    print(sensor.get_temp())
-    print('Gyro')
-    print(sensor.get_gyro_data())
-    '''
+
+
+if __name__=='__main__':
+    sys.exit(main())
+
+    
+    
 
 
