@@ -42,7 +42,7 @@ def return_list(dict):
     return [x,y,z]
 
 def startTimer():
-    threading.Timer(dt, startTimer)
+    threading.Timer(dt, startTimer).start()
     ComplementaryFilter(return_list(sensor.get_accel_data()), return_list(sensor.get_gyro_data()))
     print('pitch: {}, roll: {}'.format(pitch, roll))
 
