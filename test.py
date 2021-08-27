@@ -24,7 +24,7 @@ def ComplementaryFilter(acc, gyr):
     #Integrate gyroscope data
     pitch += gyr[0]*dt
     roll -= gyr[1]*dt
-    app=[gyr[0]*dt,gyr[1]*dt,0,0,0,0, acc[0],acc[1],acc[2]]
+    app=[gyr[0]*dt,gyr[1]*dt,pitch,0,roll,0, acc[0],acc[1],acc[2]]
     #Compensate for drift with accelerometer data if the drift is significant
     force_mag = sum([abs(i) for i in acc]) #Data is already normalized, so this is technically total acc
     #Most likely we will be using the 2G range as no higher is required
