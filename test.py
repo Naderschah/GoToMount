@@ -61,7 +61,7 @@ def main():
     startTimer(lim=1000)
     with open('test_data', 'w') as file:
         for i in perm:
-            file.writelines(i)
+            file.writelines(str(i))
     '''measure = threading.Thread(group=None, target=startTimer,daemon=True)
     measure.start()
     res = input('Press enter after rotating 90 degrees')'''
