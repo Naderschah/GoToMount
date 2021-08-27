@@ -55,10 +55,14 @@ def startTimer():
 
 def main():
     sensor.set_accel_range(sensor.ACCEL_RANGE_2G)
-    print('Dont move, data collection start in 2 seconds')
+    print('Dont move, data collection starts in 2 seconds')
     time.sleep(2)
     #Collect acc data without movement
     startTimer()
+    while True:
+        if len(perm)=>1000:
+            break
+
     with open('test_data', 'w') as file:
         csv_writer = csv.writer(file,delimiter=',')
         for i in perm:
