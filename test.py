@@ -29,7 +29,7 @@ def ComplementaryFilter(acc, gyr):
     force_mag = sum([abs(i) for i in acc]) #Data is already normalized, so this is technically total acc
     #Most likely we will be using the 2G range as no higher is required
     #FIXME: values, will depend on sidereal speed
-    if 0>force_mag>2*9.81: #Check that value is within two g
+    if 11.5>force_mag>2*9.81: #Check that value is within two g
         #Get y-axis rot
         pitch_acc = math.atan2(acc[1]/acc[2])*180/math.pi
         pitch = pitch*coeff[0]+pitch_acc*coeff[1]
