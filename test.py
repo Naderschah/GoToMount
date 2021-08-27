@@ -10,34 +10,6 @@ import csv
 
 sensor = mpu6050(0x68)
 #Coefficients to use for complementary filter
-coeff = [0.98,0.02]
-pitch = 0
-roll = 0
-#Variable to store [pitch,roll] every 10 seconds
-perm = [['IntGyrx','IntGyry','pitch','pitch_acc','roll','roll_acc','acc_x','acc_y','acc_z']]
-dt = 0.01 #Sampling rate
-
-def ComplementaryFilter(acc, gyr):
-    global pitch
-    global coeff #FIXME: Dont need roll but yaw
-    global roll
-    #Integrate gyroscope data
-    pitch += gyr[0]*dt
-    roll -= gyr[1]*dt
-    app=[gyr[0]*dt,gyr[1]*dt,pitch,0,roll,0, acc[0],acc[1],acc[2]]
-    #Compensate for drift with accelerometer data if the drift is significant
-    force_mag = sum([abs(i) for i in acc]) #Data is already normalized, so this is technically total acc
-    #Most likely we will be using the 2G range as no higher is required
-    #FIXME: values, will depend on sidereal speed
-    if 9.81>force_mag>2*9.81: #Check that value is within two g
-        #Get y-axis rot
-        pitch_acc = math.atan2(acc[1]/acc[2])*180/math.pi
-        pitch = pitch*coeff[0]+pitch_acc*coeff[1]
-        #Get x-axis rot
-        roll_acc = math.atan2(acc[0]/acc[2])*180/math.pi
-        roll = roll*coeff[0]+roll_acc*coeff[1]
-        app=[gyr[0]*dt,gyr[1]*dt,pitch,pitch_acc,roll,roll_acc, acc[0],acc[1],acc[2]]
-    perm.append(app)
 
 
 def return_list(dict):
@@ -54,23 +26,27 @@ def startTimer():
     
 
 def main():
+    pitch=0
+    roll=0
     sensor.set_accel_range(sensor.ACCEL_RANGE_2G)
-    print('Dont move, data collection starts in 2 seconds')
-    time.sleep(2)
-    #Collect acc data without movement
-    startTimer()
-    while True:
-        if len(perm)>=1000:
-            break
+    sensor.set_gyro_range(sensor.GYRO_RANGE_250DEG)
+    last_time = time.time()
+    for i in range(1,10000):
+        acc=return_list(sensor.get_accel_data())
+        gyr=return_list(sensor.get_gyro_data())
+        dt = time.time()-last_time
+        last_time = time.time()
 
-    with open('test_data', 'w') as file:
-        csv_writer = csv.writer(file,delimiter=',')
-        for i in perm:
-            csv_writer.writerow(i)
-    '''measure = threading.Thread(group=None, target=startTimer,daemon=True)
-    measure.start()
-    res = input('Press enter after rotating 90 degrees')'''
+        pitch += gyr[0]*dt
+        roll += gyr[1]*dt
 
+        force_mag = math.sqrt(acc[0]**2+acc[1]**2+acc[2]**2)
+        #Only use if data around 1g
+        if 9<force_mag<11:
+            pitch = pitch*0.95  + math.atan2(acc[1], math.sqrt(acc[0]**2 + acc[2]**2)) *180/math.pi *0.05
+            roll = roll*0.9 + math.atan2(-acc[0], acc[2])*180/math.pi *0.05
+        
+        print(round(pitch),round(roll))
 
 if __name__=='__main__':
     sys.exit(main())
