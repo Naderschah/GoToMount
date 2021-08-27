@@ -6,6 +6,7 @@ from mpu6050 import mpu6050
 import time
 import math
 import threading
+import csv
 
 sensor = mpu6050(0x68)
 #Coefficients to use for complementary filter
@@ -45,11 +46,10 @@ def return_list(dict):
     z = dict['z']
     return [x,y,z]
 
-def startTimer(lim):
-    if lim:
-        if len(perm) == lim:
-            return 0
-    threading.Timer(dt, startTimer, [1000]).start()
+def startTimer():
+    if len(perm) == 1000:
+        return 0
+    threading.Timer(dt, startTimer).start()
     ComplementaryFilter(return_list(sensor.get_accel_data()), return_list(sensor.get_gyro_data()))
     
 
@@ -58,10 +58,11 @@ def main():
     print('Dont move, data collection start in 2 seconds')
     time.sleep(2)
     #Collect acc data without movement
-    startTimer(lim=1000)
+    startTimer()
     with open('test_data', 'w') as file:
+        csv_writer = csv.writer(file,delimiter=',')
         for i in perm:
-            file.writelines(str(i))
+            csv_writer.writerow(i)
     '''measure = threading.Thread(group=None, target=startTimer,daemon=True)
     measure.start()
     res = input('Press enter after rotating 90 degrees')'''
