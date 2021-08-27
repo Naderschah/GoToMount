@@ -8,7 +8,35 @@ import math
 
 sensor = mpu6050(0x68)
 
-orientation = [0,0,0]
+#Coefficients to use for complementary filter
+coeff = [0.98,0.02]
+pitch = 0
+roll = 0
+
+dt = 0.01 #Sampling rate
+
+def ComplementaryFilter(acc, gyr):
+    global pitch
+    global coeff
+    global roll
+    #Integrate gyroscope data
+    pitch += gyr[0]*dt
+    roll -= gyr[1]*dt
+
+    #Compensate for drift with accelerometer data if the drift is significant
+    force_mag = sum(abs(acc)) #Data is already normalized, so this is technically total acc
+    #Most likely we will be using the 2G range as no higher is required
+    #FIXME: values, will depend on sidereal speed
+    if 0>force_mag>2*9.81: #Check that value is within two g
+        #Get y-axis
+        pitch_acc = math.atan2(acc[1]/acc[2])*180/math.pi
+        pitch = pitch*coeff[0]+pitch_acc*coeff[1]
+        #Get x-axis
+        roll_acc = math.atan2(acc[0]/acc[2])*180/math.pi
+        roll = roll*coeff[0]+roll_acc*coeff[1]
+
+
+
 
 def compute_rotation(gyro,correction):
     """Compute rotation in timestep --- small angle approximation"""
@@ -23,24 +51,10 @@ def compute_rotation(gyro,correction):
 
 sensor.set_accel_range(sensor.ACCEL_RANGE_2G)
 
-#Get normalization
-[x,y,z] =[0,0,0]
-for i in range(10):
-    print('Dont move')
-    gyro = sensor.get_gyro_data()
-    x += gyro['x']
-    y += gyro['y']
-    z += gyro['z']
-    x = x/10
-    y = y/10
-    z = z/10
-
-
 
 while True:
-    time.sleep(1)
-    compute_rotation(sensor.get_gyro_data(),correction=[x,y,z])
-    print(orientation)
+    ComplementaryFilter(sensor.get_accel_data(), sensor.get_gyro_data())
+    print('pitch: {}, roll: {}'.format(pitch, roll))
     
     '''
     print('Acceleration')
