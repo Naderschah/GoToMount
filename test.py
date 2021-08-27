@@ -14,7 +14,7 @@ coeff = [0.98,0.02]
 pitch = 0
 roll = 0
 #Variable to store [pitch,roll] every 10 seconds
-perm = [['IntGyrx','IntGyry','pitch','pitch_acc','roll','roll_acc']]
+perm = [['IntGyrx','IntGyry','pitch','pitch_acc','roll','roll_acc','acc_x','acc_y','acc_z']]
 dt = 0.01 #Sampling rate
 
 def ComplementaryFilter(acc, gyr):
