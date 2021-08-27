@@ -37,6 +37,12 @@ def ComplementaryFilter(acc, gyr):
 
 
 
+def return_list(dict):
+    x = dict['x']
+    y = dict['y']
+    z = dict['z']
+    return [x,y,z]
+
 
 def compute_rotation(gyro,correction):
     """Compute rotation in timestep --- small angle approximation"""
@@ -49,11 +55,13 @@ def compute_rotation(gyro,correction):
     orientation[1] += math.degrees(y_rot)
 
 
+
+
 sensor.set_accel_range(sensor.ACCEL_RANGE_2G)
 
 
 while True:
-    ComplementaryFilter(sensor.get_accel_data(), sensor.get_gyro_data())
+    ComplementaryFilter(return_list(sensor.get_accel_data()), return_list(sensor.get_gyro_data()))
     print('pitch: {}, roll: {}'.format(pitch, roll))
     
     '''
