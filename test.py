@@ -60,7 +60,7 @@ def main():
     #Collect acc data without movement
     startTimer()
     while True:
-        if len(perm)=>1000:
+        if len(perm)>=1000:
             break
 
     with open('test_data', 'w') as file:
