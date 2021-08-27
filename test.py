@@ -49,7 +49,7 @@ def startTimer(lim):
     if lim:
         if len(perm) == lim:
             return 0
-    threading.Timer(dt, startTimer).start()
+    threading.Timer(dt, startTimer, [1000]).start()
     ComplementaryFilter(return_list(sensor.get_accel_data()), return_list(sensor.get_gyro_data()))
     
 
