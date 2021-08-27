@@ -24,7 +24,7 @@ def ComplementaryFilter(acc, gyr):
     #Integrate gyroscope data
     pitch += gyr[0]*dt
     roll -= gyr[1]*dt
-    app=[gyr[0]*dt,gyr[1]*dt,0,0,0,0]
+    app=[gyr[0]*dt,gyr[1]*dt,0,0,0,0, acc[0],acc[1],acc[2]]
     #Compensate for drift with accelerometer data if the drift is significant
     force_mag = sum([abs(i) for i in acc]) #Data is already normalized, so this is technically total acc
     #Most likely we will be using the 2G range as no higher is required
@@ -36,7 +36,7 @@ def ComplementaryFilter(acc, gyr):
         #Get x-axis rot
         roll_acc = math.atan2(acc[0]/acc[2])*180/math.pi
         roll = roll*coeff[0]+roll_acc*coeff[1]
-        app=[gyr[0]*dt,gyr[1]*dt,pitch,pitch_acc,roll,roll_acc]
+        app=[gyr[0]*dt,gyr[1]*dt,pitch,pitch_acc,roll,roll_acc, acc[0],acc[1],acc[2]]
     perm.append(app)
 
 
