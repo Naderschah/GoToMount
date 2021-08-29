@@ -80,7 +80,7 @@ def data_daemon():
         
 
 if __name__=='__main__':
-    self.t = threading.Thread(data_daemon, group=None,daemon=True)
+    self.t = threading.Thread(data_daemon)
     self.t.start()
     while True:
         time.sleep(1)
