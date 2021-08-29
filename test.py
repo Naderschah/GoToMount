@@ -83,6 +83,7 @@ def data_daemon():
 
 if __name__=='__main__':
     imu = IMU()
+    next = dt.datetime.now()
     while True:
         (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
         if dt.datetime.now() <= next:
