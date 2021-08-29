@@ -10,6 +10,7 @@ import os
 import threading
 import csv
 import time
+import math
 from get_data import IMU
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 import astropy.units as u
