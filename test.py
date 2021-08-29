@@ -9,6 +9,7 @@ import time
 import math
 import threading
 import csv
+from get_data import IMU
 #Set up gyro and acc
 MPU = mpu6050(0x68)
 #Set up magnetometer
@@ -80,11 +81,11 @@ def data_daemon():
         
 
 if __name__=='__main__':
-    t = threading.Thread(group=None, target=data_daemon)
-    t.start()
+    imu = IMU()
     while True:
         time.sleep(1)
-        print(pos)
+        (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
+        print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
     
 
     
