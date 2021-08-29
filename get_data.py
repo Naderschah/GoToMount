@@ -89,7 +89,7 @@ class IMU(object):
         (self.pitch, self.roll) = self.comp_filter(raw_pitch, raw_roll)
         self.yaw = self.read_compensated_bearing(self.pitch, self.roll)
         
-        return (self.pitch, self.roll, self.yaw)
+        return [self.pitch, self.roll, self.yaw]
 
     def read_compensated_bearing(self,pitch,roll):
         '''

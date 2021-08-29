@@ -4,6 +4,7 @@ import sys
 sys.path.insert(0,'/home/pi/mpu6050')
 from mpu6050 import mpu6050
 from py_qmc5883l import QMC5883L
+import Proc_BigEasyDriver as pbed
 import geomag
 import time
 import datetime as dt
@@ -11,22 +12,9 @@ import math
 import threading
 import csv
 from get_data import IMU
-#Set up gyro and acc
-MPU = mpu6050(0x68)
-#Set up magnetometer
-QMC = QMC5883L()
-QMC.declination = geomag.declination(53.216667, 6.573889)
 
-pitch = QMC.get_bearing()
-
-pos= [pitch,0,0]
-
-def return_list(dict):
-    x = dict['x']
-    y = dict['y']
-    z = dict['z']
-    return [x,y,z]
-
+#Initiate global pos
+pos= [0,0,0]
 
 def read_compensated_bearing(pitch,roll,x,z):
         '''
@@ -52,82 +40,78 @@ def read_compensated_bearing(pitch,roll,x,z):
 def data_daemon():
     """Daemon computing the position as perceived by sensor"""
     global pos
-    [pitch,roll,yaw] = pos
+    #[pitch,roll,yaw] = pos #TODO: See how well this works when all is aligned
     
-    MPU.set_accel_range(MPU.ACCEL_RANGE_2G)
-    MPU.set_gyro_range(MPU.GYRO_RANGE_250DEG)
-    last_time = time.time()
-
-    while True:
-        acc=return_list(MPU.get_accel_data(g=True))
-        gyr=return_list(MPU.get_gyro_data())
-        dt = time.time()-last_time
-        last_time = time.time()
-
-        pitch += gyr[0]*dt
-        roll += gyr[1]*dt
-        yaw += gyr[2]*dt
-
-        force_mag = math.sqrt(acc[0]**2+acc[1]**2+acc[2]**2)
-        #Only use if data around 1g
-        if 0.9<force_mag<1.1:
-            pitch = pitch*0.95 + math.atan2(acc[0],math.sqrt(acc[1]**2+acc[2]**2))*180/math.pi *0.05
-            roll = roll*0.95 + math.atan2(-acc[1], math.sqrt(acc[0]**2+acc[2]**2))*180/math.pi *0.05
-            yaw = yaw*0.95 + math.atan2(acc[2], math.sqrt(acc[0]**2+acc[2]**2))*180/math.pi*0.05 
-            pitch = read_compensated_bearing(pitch, roll,acc[0],acc[2])
-        pos = [pitch,roll,yaw] #Can we remove roll? Probably but check
-    
-        
-        
-        
-
-if __name__=='__main__':
     imu = IMU()
     next = dt.datetime.now()
-    (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
-    print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
+    pos = imu.read_pitch_roll_yaw()
     while True:
-        (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
-        if dt.datetime.now() >= next:
-            print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
-            next = dt.datetime.now()+dt.timedelta(seconds=1)
-        else:
-            pass
+        pos = imu.read_pitch_roll_yaw()
+    
+
+if __name__=='__main__':
+    
     
 
     
 
-
-#Orientation as perceived by MPU
-pos = [0,0,0]
 
 class MountControl:
     """Class controling the telescope"""
 
-    stepsize = 1#TODO:
+    stepsize = 16#TODO:
+    dec_rpm = 0.25/360
     
     def __init__(self) -> None:
         #Start thread for recording movement
-        self.t = threading.Thread(data_daemon, daemon=True)
-        self.t.start()
-        self.azalt = [0,0]
-        self.get_az()
+        self.t = threading.Thread(data_daemon, daemon=True) #FIXME: Doesnt work
+        self.t.start() #Figure out the below
+        self.motor_alt = pbed.ProcBigEasyDriver(step, direction, ms1, ms2, ms3, enable, #Add pins
+                                   microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200,
+                                   Kp=0.2, Ki=0.1) #What is Kp and Ki
+        self.motor_alt.enable()
+        self.motor_az = pbed.ProcBigEasyDriver(step, direction, ms1, ms2, ms3, enable,
+                                   microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200*16,
+                                   Kp=0.2, Ki=0.1)
+        self.motor_az.enable()
 
-    def get_alt(self):
-        """Get azimuth from magnetic field"""
+    def correct(self, alt, az):
+        """Make correction to current coordinates"""
+        rpm = 5
+        dpm = rpm*360
+        
+        global pos
+        #Save current position
+        coord = pos
+        #Time based indexing of rotation
+        sec_for_rot = (az/dpm)*60
+        t = dt.datetime.now()+dt.timedelta(seconds=sec_for_rot)
+        self.motor_az.set_rpm(rpm)
+        while dt.datetime.now() > t:
+            pass
+        self.motor_az.set_rpm(dec_rpm)
+        #Time based indexing of rotation
+        sec_for_rot = (alt/dpm)*60
+        t = dt.datetime.now()+dt.timedelta(seconds=sec_for_rot)
+        self.motor_alt.set_rpm(rpm)
+        while dt.datetime.now() > t:
+            pass
+        self.motor_alt.set_rpm(dec_rpm)
+        #Set global pos
+        pos = coord
+        return 0
 
     def rotate_az(self,deg):
         """Rotate Motor1 Az"""
         global pos
+        #Change motor speed
+        self.motor_az.set_rpm(5)
 
-        new = self.altaz[1]+deg
-        while self.altaz[1]!=new:
-            #Reset position
-            pos[0] = 0
-            #Do step
-
-            #Compute change
-            self.altaz[1] += 0.95*self.stepsize + 0.05*pos[0] #pitch
+        new = pos[0]+deg
+        while pos[0]!=new:
+            pass
+        #Reset rpm
+        self.motor_az.set_rpm(dec_rpm)
 
         return 0
 
@@ -138,17 +122,24 @@ class MountControl:
         Modify coefficients!
         """
         global pos
-        
-        new = self.altaz[0]+deg
-        while self.altaz[0]!=new:
-            #Reset position
-            pos[2] = 0
-            #Do step
+        #Change motor speed
+        self.motor_az.set_rpm(5)
 
-            #Compute change
-            self.altaz[0] += 0.95*self.stepsize+0.05*pos[2] #yaw
+        new = pos[1]]+deg
+        while pos[1]!=new:
+            pass
+        #Reset rpm
+        self.motor_az.set_rpm(dec_rpm)
         
         return 0
+    
+    def go_to_object(self,obj)
+
+    def stop(self):
+        """Stops measurements and motors"""
+        self.motor_alt.stop()
+        self.motor_az.stop()
+        self.t.stop()
 
         
 
