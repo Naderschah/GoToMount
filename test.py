@@ -34,7 +34,7 @@ def data_daemon():
         pos = imu.read_pitch_roll_yaw()
 
 if __name__ == '__main__':
-    print('Starrting daemon') #FIXME: Check coordinate systems used, values are wrong
+    print('Starrting daemon') #FIXME: Check coordinate systems used, values are wrong should be deg
     t=threading.Thread(group=None, target=data_daemon, daemon=True)
     t.start() #Figure out the below
     while True:

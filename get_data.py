@@ -96,8 +96,11 @@ class IMU(object):
         '''
         Compensate bearing for pitch and roll
         '''
-        x = self.accel_scaled_x
-        z = self.accel_scaled_z
+        [x, y, z, t] = self.compass.get_data()
+        #Calibrate x and z
+        c = self.compass._calibration
+        x = x * c[0][0] + y * c[0][1] + c[0][2]
+        z = x * c[2][0] + y * c[2][1] + c[2][2]
 
         cos_pitch = (math.cos(pitch))
         sin_pitch = (math.sin(pitch))
@@ -110,6 +113,6 @@ class IMU(object):
         
         bearing = math.atan2(Yh, Xh)
         if bearing < 0:
-            return bearing + self.TWO_PI
+            return bearing + self.TWO_PI + self.compass._declination
         else:
-            return bearing
+            return bearing+self.compass._declination
