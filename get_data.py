@@ -91,7 +91,7 @@ class IMU(object):
         
         return (self.pitch, self.roll, self.yaw)
 
-    def read_compensated_bearing(pitch,roll):
+    def read_compensated_bearing(self,pitch,roll):
         '''
         Compensate bearing for pitch and roll
         '''
