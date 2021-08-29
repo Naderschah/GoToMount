@@ -3,6 +3,8 @@
 import sys
 sys.path.insert(0,'/home/pi/mpu6050')
 from mpu6050 import mpu6050
+from py_qmc5883l import QMC5883L
+import geomag
 import time
 import math
 import threading
@@ -52,7 +54,10 @@ def data_daemon():
         
 
 if __name__=='__main__':
-    
+    sensor = QMC5883L()
+    sensor.declination = geomag.declination(53.216667, 6.573889)
+    for i in 10000:
+        print(sensor.get_bearing())
 
     
 
