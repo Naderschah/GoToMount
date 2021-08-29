@@ -47,7 +47,7 @@ def read_compensated_bearing(pitch,roll,x,z):
         else:
             return bearing
 
-def data_daemon():
+def data_daemon(name):
     """Daemon computing the position as perceived by sensor"""
     global pos
     [pitch,roll,yaw] = pos
@@ -80,7 +80,7 @@ def data_daemon():
         
 
 if __name__=='__main__':
-    self.t = threading.Thread(data_daemon, args=())
+    self.t = threading.Thread(data_daemon, args=(1,))
     self.t.start()
     while True:
         time.sleep(1)
