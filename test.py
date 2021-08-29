@@ -25,7 +25,7 @@ lon = 6.556274609173566
 def data_daemon():
     """Daemon computing the position as perceived by sensor"""
     global pos
-    #[pitch,roll,yaw] = pos #TODO: See how well this works when all is aligned
+    #[pitch,roll,yaw] = [alt,roll,az] pos #TODO: See how well this works when all is aligned
     
     imu = IMU(lat,lon)
     next = dt.datetime.now()
@@ -34,11 +34,12 @@ def data_daemon():
         pos = imu.read_pitch_roll_yaw()
 
 if __name__ == '__main__':
-    print('Starrting daemon')
+    print('Starrting daemon') #FIXME: Check coordinate systems used, values are wrong
     t=threading.Thread(group=None, target=data_daemon, daemon=True)
     t.start() #Figure out the below
     while True:
         time.sleep(1)
+        print(pos)
         print([i*180/math.pi for i in pos])
 
 

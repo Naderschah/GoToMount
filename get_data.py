@@ -41,11 +41,12 @@ class IMU(object):
 
     def read_all(self):
         '''Return pitch and roll in radians and the scaled x, y & z values from the gyroscope and accelerometer'''
+        #One test reading
         self.acc_gyro.get_all_data()
         
         [self.gyro_scaled_x,self.gyro_scaled_y,self.gyro_scaled_z] = return_list(self.acc_gyro.get_gyro_data())
         
-        [self.accel_scaled_x,self.accel_scaled_y,self.accel_scaled_z] = return_list(self.acc_gyro.get_accel_data())
+        [self.accel_scaled_x,self.accel_scaled_y,self.accel_scaled_z] = return_list(self.acc_gyro.get_accel_data(g=True))
         
         self.rotation_x = self.read_x_rotation(self.accel_scaled_x, self.accel_scaled_y, self.accel_scaled_z)
         self.rotation_y = self.read_y_rotation(self.accel_scaled_x, self.accel_scaled_y, self.accel_scaled_z)
