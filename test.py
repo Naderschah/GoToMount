@@ -30,7 +30,8 @@ def data_daemon():
         pos = imu.read_pitch_roll_yaw()
 
 if __name__ == '__main__':
-    data_daemon()
+    t=threading.Thread(group=None, target=data_daemon, daemon=True) #FIXME: Doesnt work
+    t.start() #Figure out the below
     while True:
         time.sleep(1)
         print(pos)
