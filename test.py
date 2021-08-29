@@ -5,37 +5,18 @@ sys.path.insert(0,'/home/pi/mpu6050')
 from mpu6050 import mpu6050
 from py_qmc5883l import QMC5883L
 import Proc_BigEasyDriver as pbed
-import geomag
-import time
 import datetime as dt
-import math
+import os
 import threading
 import csv
 from get_data import IMU
+from astropy.coordinates import SkyCoord, EarthLocation, AltAz
+import astropy.units as u
+from astropy.time import Time
 
 #Initiate global pos
 pos= [0,0,0]
 
-def read_compensated_bearing(pitch,roll,x,z):
-        '''
-        Compensate bearing for pitch and roll
-        Adapted from: https://github.com/bitify/raspi/blob/2619da30ec36b29e47baae9a65b89d19653b5ec2/i2c-sensors/bitify/python/sensors/hmc5883l.py#L91
-        '''
-        
-        cos_pitch = (math.cos(pitch))
-        sin_pitch = (math.sin(pitch))
-        
-        cos_roll = (math.cos(roll))
-        sin_roll = (math.sin(roll))
-    
-        Xh = (x * cos_roll) + (z * sin_roll)
-        Yh = (x * sin_pitch * sin_roll) + (z * cos_pitch) - (z * sin_pitch * cos_roll)
-        
-        bearing = math.atan2(Yh, Xh)
-        if bearing < 0:
-            return bearing + (2*math.pi)
-        else:
-            return bearing
 
 def data_daemon():
     """Daemon computing the position as perceived by sensor"""
@@ -47,13 +28,12 @@ def data_daemon():
     pos = imu.read_pitch_roll_yaw()
     while True:
         pos = imu.read_pitch_roll_yaw()
-    
 
-if __name__=='__main__':
-    
-    
-
-    
+if __name__ == '__main__':
+    data_daemon()
+    while True:
+        time.sleep(1)
+        print(pos)
 
 
 class MountControl:
@@ -62,11 +42,18 @@ class MountControl:
     stepsize = 16#TODO:
     dec_rpm = 0.25/360
     
-    def __init__(self) -> None:
+    lat = 53.21629287617459#TODO: Get GPS?
+    lon = 6.556274609173566
+    
+    def __init__(self, lat=None, lon=None) -> None:
+        if lat!=None:
+            self.lat=lat
+        if lon!=None:
+            self.lon=lon
         #Start thread for recording movement
-        self.t = threading.Thread(data_daemon, daemon=True) #FIXME: Doesnt work
+        self.t = threading.Thread(group=None, target=data_daemon, daemon=True) #FIXME: Doesnt work
         self.t.start() #Figure out the below
-        self.motor_alt = pbed.ProcBigEasyDriver(step, direction, ms1, ms2, ms3, enable, #Add pins
+        self.motor_alt = pbed.ProcBigEasyDriver(step, direction, ms1, ms2, ms3, enable, #TODO Add pins
                                    microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200,
                                    Kp=0.2, Ki=0.1) #What is Kp and Ki
         self.motor_alt.enable()
@@ -125,7 +112,7 @@ class MountControl:
         #Change motor speed
         self.motor_az.set_rpm(5)
 
-        new = pos[1]]+deg
+        new = pos[1]+deg
         while pos[1]!=new:
             pass
         #Reset rpm
@@ -133,13 +120,52 @@ class MountControl:
         
         return 0
     
-    def go_to_object(self,obj)
+    def go_to_object(self,obj):
+        '''loads ra/dec from objects folder and moves telescope'''
+        #Get ra/dec
+        if obj[0] == 'M': file_name = os.path.join('./objects', 'MessierObjects.xls')
+        if obj[0] == 'N': file_name = os.path.join('./objects', 'NGCObjects.xls')
+        index = int(obj.split(' ')[-1])+1 #+1 since the file contains headers
+        #Only load relevant row
+        with open(file_name, "rt") as infile:
+            r = csv.reader(infile)
+            for i in range(index):
+                next(r)     
+            row = next(r)   
+        ra = row[3:5]
+        dec = row[5:8]
+        del row, index, file_name
+        #Get alt az
+        (alt,az)=self.radec_altaz(ra,dec)
+        #Move motors
+        self.rotate_az(pos[0]-az)
+        self.rotate_alt(pos[2]-alt)
+        #Debugging until tracking accuracy is determined
+        print('az offset: {}, alt offset: {}'.format(pos[0]-az,pos[2]-alt))
+        return 0
+
+    def radec_altaz(self,ra,dec):
+        """Ra Dec to Alt Az"""
+        #Get ra and dec as degrees
+        ra = (ra[0]+ra[1]/60)*15
+        dec = dec[1]+dec[2]
+        if dec[0]=='-':
+            dec = -dec
+        #Set astropy variables
+        l = EarthLocation(self.lon,self.lat,height=5*u.m) #change height somehow but shouldnt matter 
+        obj = SkyCoord(ra*u.deg,dec*u.deg,frame='icrs')
+        altaz = AltAzs(location=l,obstime=Time.now())
+        obj.transform_to(altaz)
+        (alt,az)=(obj.alt, obj.az)
+        del obj, altaz, l
+        return (alt,az)
 
     def stop(self):
         """Stops measurements and motors"""
         self.motor_alt.stop()
         self.motor_az.stop()
         self.t.stop()
+        return 0
 
         
 

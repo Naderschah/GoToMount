@@ -21,11 +21,11 @@ class IMU(object):
     K1 = 1 - K
     TWO_PI = (2*math.pi)
     
-    def __init__(self):
+    def __init__(self, lat, lon):
 
         self.acc_gyro = mpu6050(0x68)
         self.compass = QMC5883L()
-        self.compass.declination = geomag.declination(53.216667, 6.573889)
+        self.compass.declination = geomag.declination(lat,lon)
 
         self.last_time = time.time()
         self.time_diff = 0
