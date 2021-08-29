@@ -84,12 +84,15 @@ def data_daemon():
 if __name__=='__main__':
     imu = IMU()
     next = dt.datetime.now()
+    (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
+    print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
     while True:
         (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
         if dt.datetime.now() >= next:
             print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
             next = dt.datetime.now()+dt.timedelta(seconds=1)
-            print(type(next))
+        else:
+            pass
     
 
     
