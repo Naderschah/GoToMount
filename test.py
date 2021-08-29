@@ -18,13 +18,15 @@ from astropy.time import Time
 #Initiate global pos
 pos= [0,0,0]
 
+lat = 53.21629287617459#TODO: Get GPS?
+lon = 6.556274609173566
 
 def data_daemon():
     """Daemon computing the position as perceived by sensor"""
     global pos
     #[pitch,roll,yaw] = pos #TODO: See how well this works when all is aligned
     
-    imu = IMU()
+    imu = IMU(lat,lon)
     next = dt.datetime.now()
     pos = imu.read_pitch_roll_yaw()
     while True:
@@ -43,9 +45,9 @@ class MountControl:
 
     stepsize = 16#TODO:
     dec_rpm = 0.25/360
-    
-    lat = 53.21629287617459#TODO: Get GPS?
-    lon = 6.556274609173566
+
+    lat = lat
+    lon = lon
     
     def __init__(self, lat=None, lon=None) -> None:
         if lat!=None:
