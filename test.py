@@ -88,6 +88,7 @@ if __name__=='__main__':
         if dt.datetime.now() <= next:
             print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
             next = dt.datetime.now()+dt.timedelta(seconds=1)
+            print(type(next))
     
 
     
