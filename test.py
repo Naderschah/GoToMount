@@ -85,9 +85,9 @@ if __name__=='__main__':
     imu = IMU()
     while True:
         (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
-        if dt.time.now() <= next:
+        if dt.datetime.now() <= next:
             print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
-            next = dt.time.now()+dt.timedelta(seconds=1)
+            next = dt.datetime.now()+dt.timedelta(seconds=1)
     
 
     
