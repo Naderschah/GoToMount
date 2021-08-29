@@ -13,7 +13,7 @@ import smbus
 import time
 import math
  
-bus = smbus.SMBus(0)
+bus = smbus.SMBus(1)
 address = 0x1e
  
  

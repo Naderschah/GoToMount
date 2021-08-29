@@ -76,7 +76,7 @@ class MountControl:
     def get_alt(self):
         """Get azimuth from magnetic field"""
 
-    def rotate_1(self,deg):
+    def rotate_az(self,deg):
         """Rotate Motor1 Az"""
         global pos
 
@@ -91,7 +91,7 @@ class MountControl:
 
         return 0
 
-    def rotate_2(self,deg):
+    def rotate_alt(self,deg):
         """Rotate Motor2 Alt
         -------------------------
         gets global pos for positional data as returned by data_daemon
