@@ -6,6 +6,7 @@ from mpu6050 import mpu6050
 from py_qmc5883l import QMC5883L
 import geomag
 import time
+import datetime as dt
 import math
 import threading
 import csv
@@ -83,9 +84,10 @@ def data_daemon():
 if __name__=='__main__':
     imu = IMU()
     while True:
-        time.sleep(1)
         (pitch,roll,yaw) = imu.read_pitch_roll_yaw()
-        print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
+        if dt.time.now() <= next:
+            print('pitch: {}, roll {}, yaw {}'.format(pitch,roll,yaw))
+            next = dt.time.now()+dt.timedelta(seconds=1)
     
 
     
