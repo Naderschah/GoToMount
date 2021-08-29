@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0,'/home/pi/mpu6050')
 from mpu6050 import mpu6050
 from py_qmc5883l import QMC5883L
-import Proc_BigEasyDriver as pbed
+import ProcBigEasyDriver as pbed
 import datetime as dt
 import os
 import threading
@@ -30,7 +30,7 @@ def data_daemon():
         pos = imu.read_pitch_roll_yaw()
 
 if __name__ == '__main__':
-    t=threading.Thread(group=None, target=data_daemon, daemon=True) #FIXME: Doesnt work
+    t=threading.Thread(group=None, target=data_daemon, daemon=True)
     t.start() #Figure out the below
     while True:
         time.sleep(1)
@@ -52,7 +52,7 @@ class MountControl:
         if lon!=None:
             self.lon=lon
         #Start thread for recording movement
-        self.t = threading.Thread(group=None, target=data_daemon, daemon=True) #FIXME: Doesnt work
+        self.t = threading.Thread(group=None, target=data_daemon, daemon=True)
         self.t.start() #Figure out the below
         self.motor_alt = pbed.ProcBigEasyDriver(step, direction, ms1, ms2, ms3, enable, #TODO Add pins
                                    microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200,
