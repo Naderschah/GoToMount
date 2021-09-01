@@ -18,7 +18,7 @@ from astropy.time import Time
 
 #Initiate global pos
 
-
+pos = [0,0,0]
 lat = 53.21629287617459#TODO: Get GPS?
 lon = 6.556274609173566
 
@@ -38,7 +38,7 @@ def data_daemon():
 class MountControl:
     """Class controling the telescope"""
 
-    stepsize = 16#TODO:
+    stepsize = 16
     dec_rpm = 0.25/360
     global lat,lon
     lat = lat
@@ -53,11 +53,11 @@ class MountControl:
         self.t = threading.Thread(group=None, target=data_daemon, daemon=True)
         self.t.start() #Figure out the below
         self.motor_alt = pbed.ProcBigEasyDriver(step=13, direction=19, ms1=21, ms2=20, ms3=16, enable=26,
-                                   microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200,
+                                   microstepping=self.stepsize, rpm=self.dec_rpm, steps_per_rev=200*self.stepsize,
                                    Kp=0.2, Ki=0.1) #What is Kp and Ki
         self.motor_alt.enable()
         self.motor_az = pbed.ProcBigEasyDriver(step=27, direction=17, ms1=23, ms2=24, ms3=25, enable=12, 
-                                   microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200*16,
+                                   microstepping=self.stepsize, rpm=self.dec_rpm, steps_per_rev=200*self.stepsize,
                                    Kp=0.2, Ki=0.1)
         self.motor_az.enable()
 
