@@ -49,7 +49,7 @@ class IMU(object):
         '''
         (raw_pitch, raw_roll, self.gyro_scaled_x, self.gyro_scaled_y, \
             self.gyro_scaled_z, self.accel_scaled_x, self.accel_scaled_y, \
-            self.accel_scaled_z) = self.read_all()
+            self.accel_scaled_z) = self.gyroscope.read_all()
         
         now = time.time()
         self.time_diff = now - self.last_time
