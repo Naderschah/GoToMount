@@ -25,22 +25,14 @@ lon = 6.556274609173566
 def data_daemon():
     """Daemon computing the position as perceived by sensor"""
     global pos
-    #[pitch,roll,yaw] = [alt,roll,az] pos #TODO: See how well this works when all is aligned
+    #[pitch,roll,yaw] = [alt,roll,az] pos 
     
     imu = IMU(lat,lon)
+    imu.set_compass_offsets(9, -10, -140)
     next = dt.datetime.now()
     pos = imu.read_pitch_roll_yaw()
     while True:
         pos = imu.read_pitch_roll_yaw()
-
-if __name__ == '__main__':
-    print('Starrting daemon') #FIXME: Check coordinate systems used, values are wrong should be deg
-    t=threading.Thread(group=None, target=data_daemon, daemon=True)
-    t.start() #Figure out the below
-    while True:
-        time.sleep(1)
-        print(pos)
-        print([i*180/math.pi for i in pos])
 
 
 class MountControl:
@@ -48,7 +40,7 @@ class MountControl:
 
     stepsize = 16#TODO:
     dec_rpm = 0.25/360
-
+    global lat,lon
     lat = lat
     lon = lon
     
@@ -60,11 +52,11 @@ class MountControl:
         #Start thread for recording movement
         self.t = threading.Thread(group=None, target=data_daemon, daemon=True)
         self.t.start() #Figure out the below
-        self.motor_alt = pbed.ProcBigEasyDriver(step, direction, ms1, ms2, ms3, enable, #TODO Add pins
+        self.motor_alt = pbed.ProcBigEasyDriver(step=13, direction=19, ms1=21, ms2=20, ms3=16, enable=26,
                                    microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200,
                                    Kp=0.2, Ki=0.1) #What is Kp and Ki
         self.motor_alt.enable()
-        self.motor_az = pbed.ProcBigEasyDriver(step, direction, ms1, ms2, ms3, enable,
+        self.motor_az = pbed.ProcBigEasyDriver(step=27, direction=17, ms1=23, ms2=24, ms3=25, enable=12, 
                                    microstepping=stepsize, rpm=dec_rpm, steps_per_rev=200*16,
                                    Kp=0.2, Ki=0.1)
         self.motor_az.enable()
@@ -161,7 +153,7 @@ class MountControl:
         #Set astropy variables
         l = EarthLocation(self.lon,self.lat,height=5*u.m) #change height somehow but shouldnt matter 
         obj = SkyCoord(ra*u.deg,dec*u.deg,frame='icrs')
-        altaz = AltAzs(location=l,obstime=Time.now())
+        altaz = AltAz(location=l,obstime=Time.now())
         obj.transform_to(altaz)
         (alt,az)=(obj.alt, obj.az)
         del obj, altaz, l
@@ -175,4 +167,14 @@ class MountControl:
         return 0
 
         
-
+if __name__ == '__main__':
+    print('Starrting daemon') #FIXME: Doesnt work, use whole script IMU, and rewrite subclass for QMC5583L
+    #ALso change reading frequency for chips
+    #QMC: MaxOpCurr: 75uA@10Hz
+    mount = MountControl
+    t=threading.Thread(group=None, target=data_daemon, daemon=True)
+    t.start() #Figure out the below
+    while True:
+        time.sleep(1)
+        print(pos)
+        print([i*180/math.pi for i in pos])
