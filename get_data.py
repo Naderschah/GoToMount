@@ -24,7 +24,7 @@ class IMU(object):
     
     def __init__(self, lat, lon):
 
-        self.gyroscope = MPU6050(smbus.SMBus(1), 0x68, 'gyroscope', fs_scale=MPU6050.FS_2000, afs_scale=MPU6050.AFS_16g)
+        self.gyroscope = MPU6050(smbus.SMBus(1), 0x68, 'gyroscope', fs_scale=MPU6050.FS_250, afs_scale=MPU6050.AFS_2g)
         self.compass = QMC5883L()
         self.compass.declination = geomag.declination(lat,lon)
 
