@@ -28,7 +28,6 @@ def data_daemon():
     #[pitch,roll,yaw] = [alt,roll,az] pos 
     
     imu = IMU(lat,lon)
-    #imu.set_compass_offsets(9, -10, -140)
     next = dt.datetime.now()
     pos = imu.read_pitch_roll_yaw()
     while True:
@@ -168,13 +167,12 @@ class MountControl:
 
         
 if __name__ == '__main__':
-    print('Starrting daemon') #FIXME: Doesnt work, use whole script IMU, and rewrite subclass for QMC5583L
+    print('Starrting daemon')
     #ALso change reading frequency for chips
     #QMC: MaxOpCurr: 75uA@10Hz
-    mount = MountControl()
-    #t=threading.Thread(group=None, target=data_daemon, daemon=True)
-    #t.start() #Figure out the below
-    #while True:
-    #    time.sleep(1)
-    #    print(pos)
-    #    print([i*180/math.pi for i in pos])
+    #mount = MountControl()
+    t=threading.Thread(group=None, target=data_daemon, daemon=True)
+    t.start() #Figure out the below
+    while True:
+        time.sleep(1)
+        print(pos)
