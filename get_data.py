@@ -8,7 +8,7 @@ import time
 from py_qmc5883l import QMC5883L
 import geomag
 import math
-
+import smbus
 
 def return_list(dict):
     x = dict['x']

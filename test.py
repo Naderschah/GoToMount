@@ -1,16 +1,11 @@
 #!/usr/bin/python3
 
-import sys
-sys.path.insert(0,'/home/pi/mpu6050')
-from mpu6050 import mpu6050
-from py_qmc5883l import QMC5883L
 import ProcBigEasyDriver as pbed
 import datetime as dt
 import os
 import threading
 import csv
 import time
-import math
 from get_data import IMU
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 import astropy.units as u
