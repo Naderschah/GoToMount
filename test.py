@@ -51,7 +51,7 @@ class MountControl:
             self.lon=lon
         #Start thread for recording movement
         self.t = threading.Thread(group=None, target=data_daemon, daemon=True)
-        self.t.start() #Figure out the below
+        #self.t.start() #Figure out the below
         self.motor_alt = pbed.ProcBigEasyDriver(step=13, direction=19, ms1=21, ms2=20, ms3=16, enable=26,
                                    microstepping=self.stepsize, rpm=self.dec_rpm, steps_per_rev=200*self.stepsize,
                                    Kp=0.2, Ki=0.1) #What is Kp and Ki
@@ -172,9 +172,9 @@ if __name__ == '__main__':
     #ALso change reading frequency for chips
     #QMC: MaxOpCurr: 75uA@10Hz
     mount = MountControl()
-    t=threading.Thread(group=None, target=data_daemon, daemon=True)
-    t.start() #Figure out the below
-    while True:
-        time.sleep(1)
-        print(pos)
-        print([i*180/math.pi for i in pos])
+    #t=threading.Thread(group=None, target=data_daemon, daemon=True)
+    #t.start() #Figure out the below
+    #while True:
+    #    time.sleep(1)
+    #    print(pos)
+    #    print([i*180/math.pi for i in pos])
