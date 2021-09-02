@@ -13,20 +13,23 @@ from astropy.time import Time
 
 #Initiate global pos
 
-pos = [0,0,0]
-lat = 53.21629287617459#TODO: Get GPS?
-lon = 6.556274609173566
 
-def data_daemon():
+class Data_Daemon:
     """Daemon computing the position as perceived by sensor"""
-    global pos
-    #[pitch,roll,yaw] = [alt,roll,az] pos 
+    pos = [0,0,0]
+    def __init__(self) -> None:    
+        pass
     
-    imu = IMU(lat,lon)
-    next = dt.datetime.now()
-    pos = imu.read_pitch_roll_yaw()
-    while True:
+    @classmethod
+    def get(cls):
+        return cls.pos
+    
+    def run(self):
+        imu = IMU(lat,lon)
+        next = dt.datetime.now()
         pos = imu.read_pitch_roll_yaw()
+        while True:
+            pos = imu.read_pitch_roll_yaw()
 
 
 class MountControl:
@@ -34,17 +37,17 @@ class MountControl:
 
     stepsize = 16
     dec_rpm = 0.25/360
-    global lat,lon
-    lat = lat
-    lon = lon
-    
+    lat = 53.21629287617459 #TODO: GPS?
+    lon = 6.556274609173566
+    obj = None
+
     def __init__(self, lat=None, lon=None) -> None:
         if lat!=None:
             self.lat=lat
         if lon!=None:
             self.lon=lon
         #Start thread for recording movement
-        self.t = threading.Thread(group=None, target=data_daemon, daemon=True)
+        self.t = threading.Thread(group=None, target=Data_Daemon, daemon=True)
         #self.t.start() #Figure out the below
         self.motor_alt = pbed.ProcBigEasyDriver(step=13, direction=19, ms1=21, ms2=20, ms3=16, enable=26,
                                    microstepping=self.stepsize, rpm=self.dec_rpm, steps_per_rev=200*self.stepsize,
@@ -60,62 +63,74 @@ class MountControl:
         rpm = 5
         dpm = rpm*360
         
-        global pos
         #Save current position
-        coord = pos
+        coord = self.t.get()
         #Time based indexing of rotation
         sec_for_rot = (az/dpm)*60
         t = dt.datetime.now()+dt.timedelta(seconds=sec_for_rot)
         self.motor_az.set_rpm(rpm)
         while dt.datetime.now() > t:
             pass
-        self.motor_az.set_rpm(dec_rpm)
+        self.motor_az.set_rpm(self.dec_rpm)
         #Time based indexing of rotation
         sec_for_rot = (alt/dpm)*60
         t = dt.datetime.now()+dt.timedelta(seconds=sec_for_rot)
         self.motor_alt.set_rpm(rpm)
         while dt.datetime.now() > t:
             pass
-        self.motor_alt.set_rpm(dec_rpm)
+        self.motor_alt.set_rpm(self.dec_rpm)
         #Set global pos
-        pos = coord
+        self.t.pos = coord
         return 0
 
-    def rotate_az(self,deg):
+    def rotate_az(self,az):
         """Rotate Motor1 Az"""
-        global pos
         #Change motor speed
         self.motor_az.set_rpm(5)
 
-        new = pos[0]+deg
-        while pos[0]!=new:
+        if az < self.t.get()[0]:
+            self.motor_az.reverse()
+            rev = True
+        else:
+            rev =False
+
+        while self.t.get()[0]!=az:
             pass
         #Reset rpm
-        self.motor_az.set_rpm(dec_rpm)
+        self.motor_az.set_rpm(self.dec_rpm)
 
         return 0
 
-    def rotate_alt(self,deg):
+    def rotate_alt(self,alt):
         """Rotate Motor2 Alt
         -------------------------
         gets global pos for positional data as returned by data_daemon
         Modify coefficients!
         """
-        global pos
-        #Change motor speed
-        self.motor_az.set_rpm(5)
 
-        new = pos[1]+deg
-        while pos[1]!=new:
+        #Change motor speed
+        self.motor_alt.set_rpm(5)
+
+        if alt < self.t.get()[0]:
+            self.motor_alt.reverse()
+            rev = True
+        else:
+            rev =False
+
+        while self.t.get()[1]!=alt:
             pass
+
         #Reset rpm
-        self.motor_az.set_rpm(dec_rpm)
+        self.motor_alt.set_rpm(self.dec_rpm)
+        if rev:
+            self.motor_alt.forwards()
         
         return 0
     
     def go_to_object(self,obj):
         '''loads ra/dec from objects folder and moves telescope'''
         #Get ra/dec
+        self.obj = obj
         if obj[0] == 'M': file_name = os.path.join('./objects', 'MessierObjects.xls')
         if obj[0] == 'N': file_name = os.path.join('./objects', 'NGCObjects.xls')
         index = int(obj.split(' ')[-1])+1 #+1 since the file contains headers
@@ -131,10 +146,10 @@ class MountControl:
         #Get alt az
         (alt,az)=self.radec_altaz(ra,dec)
         #Move motors
-        self.rotate_az(pos[0]-az)
-        self.rotate_alt(pos[2]-alt)
+        self.rotate_az(az)
+        self.rotate_alt(alt)
         #Debugging until tracking accuracy is determined
-        print('az offset: {}, alt offset: {}'.format(pos[0]-az,pos[2]-alt))
+        print('az offset: {}, alt offset: {}'.format(self.t.get()[0]-az,self.t.get()[2]-alt))
         return 0
 
     def radec_altaz(self,ra,dec):
@@ -162,12 +177,10 @@ class MountControl:
 
         
 if __name__ == '__main__':
-    print('Starrting daemon')
-    #ALso change reading frequency for chips
-    #QMC: MaxOpCurr: 75uA@10Hz
+    print('Starting daemon')
     #mount = MountControl()
     t=threading.Thread(group=None, target=data_daemon, daemon=True)
     t.start() #Figure out the below
     while True:
         time.sleep(1)
-        print(pos)
+        print(t.get())
